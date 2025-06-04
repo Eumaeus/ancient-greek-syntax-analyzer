@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ancient Greek Syntax Analyzer</title>
+    <style>
+        /* Modern, minimalist UI */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #1a1a1a;
+        }
+        h1 {
+            font-size: 1.8em;
+            font-weight: 600;
+            margin: 20px 0;
+            color: #1a1a1a;
+        }
+        h2 {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin: 15px 0;
+        }
+        .instructions {
+            font-size: 0.9em;
+            color: #4a4a4a;
+            margin-bottom: 10px;
+        }
+        #input-section, #stage1-section, #stage2-section, #stage3-section {
+            width: 80%;
+            max-width: 700px;
+            margin-bottom: 20px;
+        }
+        #sentence-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1em;
+            border: 1px solid #d1d1d1;
+            border-radius: 6px;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.2s;
+            resize: vertical;
+            min-height: 80px;
+        }
+        #sentence-input:focus {
+            border-color: #005ea2;
+            outline: none;
+        }
+        #controls {
+            margin: 10px 0;
+        }
+        #asyndeton-checkbox {
+            margin-right: 8px;
+        }
+        #token-output {
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #d1d1d1;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-size: 1em;
+            line-height: 1.6;
+        }
+        .token-lexical {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #e6f0fa;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .token-lexical:hover {
+            background: #cce4f7;
+        }
+        .token-lexical.sentence-adverbial, .token-lexical.root-token {
+            background: #fff9c4;
+            border-color: #fbc02d;
+            cursor: default;
+        }
+        .token-lexical.assigned-vu1 {
+            border-color: #005ea2; /* Blue for VU1 */
+        }
+        .token-lexical.assigned-vu2 {
+            border-color: #2e7d32; /* Green for VU2 */
+        }
+        .token-lexical.assigned-vu3 {
+            border-color: #d81b60; /* Pink for VU3 */
+        }
+        .token-lexical.assigned-vu4 {
+            border-color: #f57c00; /* Orange for VU4 */
+        }
+        .token-lexical.assigned-vu5 {
+            border-color: #6a1b9a; /* Purple for VU5 */
+        }
+        .token-id {
+            font-size: 0.7em;
+            vertical-align: super;
+            color: #005ea2;
+        }
+        .token-white-space {
+            white-space: pre;
+        }
+        .token-punctuation {
+            display: inline;
+        }
+        #status {
+            font-size: 0.9em;
+            color: #1a1a1a;
+            margin-bottom: 20px;
+        }
+        #stage2-section, #stage3-section {
+            display: none;
+        }
+        #verbal-unit-form {
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #d1d1d1;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #verbal-unit-form label {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        #verbal-unit-form select {
+            padding: 8px;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-size: 0.9em;
+            width: 100%;
+        }
+        #verbal-unit-id {
+            font-size: 0.9em;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        #confirm-btn {
+            padding: 10px;
+            font-size: 0.95em;
+            background: #005ea2;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #confirm-btn:hover {
+            background: #003e73;
+        }
+        #verbal-unit-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border: 1px solid #d1d1d1;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-top: 15px;
+        }
+        #verbal-unit-table th, #verbal-unit-table td {
+            padding: 10px;
+            border: 1px solid #d1d1d1;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        #verbal-unit-table th {
+            background: #f0f0f0;
+            font-weight: 600;
+        }
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .edit-btn {
+            background: #005ea2;
+            color: #fff;
+            margin-right: 5px;
+        }
+        .edit-btn:hover {
+            background: #003e73;
+        }
+        .delete-btn {
+            background: #d32f2f;
+            color: #fff;
+        }
+        .delete-btn:hover {
+            background: #b71c1c;
+        }
+        #assignment-form {
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #d1d1d1;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+        #assignment-form label {
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        #assignment-form select {
+            padding: 8px;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-size: 0.9em;
+            width: 100%;
+            max-width: 300px;
+        }
+        #assignment-display {
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #d1d1d1;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .verbal-unit-row {
+            margin: 10px 0;
+        }
+        .verbal-unit-row .unit-info {
+            font-size: 0.9em;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        .verbal-unit-row .tokens {
+            display: block;
+        }
+        .level-1 { margin-left: 0; }
+        .level-2 { margin-left: 1em; }
+        .level-3 { margin-left: 2em; }
+        .level-4 { margin-left: 3em; }
+        .level-5 { margin-left: 4em; }
+        #unassigned-tokens {
+            margin-top: 15px;
+        }
+        #unassigned-tokens .tokens {
+            display: inline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ancient Greek Syntax Analyzer</h1>
+    <div id="input-section">
+        <textarea id="sentence-input" placeholder="Enter an Ancient Greek sentence..."></textarea>
+    </div>
+    <div id="stage1-section">
+        <h2>Stage 1: Sentence Adverbial Identification</h2>
+        <p class="instructions">Click a token to select a sentence adverbial (e.g., γὰρ), or check asyndeton if none exists, to unlock Stage 2. The adverbial or a notional root (for asyndeton) will be the root of the syntax graph.</p>
+        <div id="controls">
+            <input type="checkbox" id="asyndeton-checkbox">
+            <label for="asyndeton-checkbox">This sentence illustrates <i>asyndeton</i>.</label>
+        </div>
+        <div id="token-output"></div>
+        <div id="status"></div>
+    </div>
+    <div id="stage2-section">
+        <h2>Stage 2: Clause/Phrase Analysis</h2>
+        <p class="instructions">Define verbal units by selecting their Syntactic Type, Semantic Type, and Level (1–5), then click Confirm. Edit or delete units as needed before assigning tokens in Stage 3.</p>
+        <div id="verbal-unit-form">
+            <label for="verbal-unit-id">Verbal Unit ID:</label>
+            <span id="verbal-unit-id"></span>
+            <label for="syntactic-type">Syntactic Type:</label>
+            <select id="syntactic-type">
+                <option value="Independent Clause">Independent Clause</option>
+                <option value="Subordinate Clause">Subordinate Clause</option>
+                <option value="Circumstantial Participle">Circumstantial Participle</option>
+                <option value="Attributive Participle">Attributive Participle</option>
+                <option value="Indirect Statement with Infinitive">Indirect Statement with Infinitive</option>
+                <option value="Indirect Statement with Participle">Indirect Statement with Participle</option>
+            </select>
+            <label for="semantic-type">Semantic Type:</label>
+            <select id="semantic-type">
+                <option value="Transitive">Transitive</option>
+                <option value="Intransitive">Intransitive</option>
+                <option value="Linking">Linking</option>
+            </select>
+            <label for="level">Level (1–5):</label>
+            <select id="level">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+            </select>
+            <button id="confirm-btn">Confirm Verbal Unit</button>
+        </div>
+        <table id="verbal-unit-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Syntactic Type</th>
+                    <th>Semantic Type</th>
+                    <th>Level</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="verbal-unit-table-body"></tbody>
+        </table>
+    </div>
+    <div id="stage3-section">
+        <h2>Stage 3: Token Assignment</h2>
+        <p class="instructions">Select a verbal unit from the dropdown, then click tokens in the Unassigned Tokens list to assign them. Click assigned tokens (under a verbal unit) to unassign. The sentence adverbial or root token cannot be assigned.</p>
+        <div id="assignment-form">
+            <label for="verbal-unit-select">Assign to Verbal Unit:</label>
+            <select id="verbal-unit-select"></select>
+        </div>
+        <div id="assignment-display"></div>
+    </div>
+
+    <script>
+        // Generate a simple UUID for sentence ID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Initialize DOM elements
+        const input = document.getElementById('sentence-input');
+        const asyndetonCheckbox = document.getElementById('asyndeton-checkbox');
+        const tokenOutput = document.getElementById('token-output');
+        const status = document.getElementById('status');
+        const stage2Section = document.getElementById('stage2-section');
+        const stage3Section = document.getElementById('stage3-section');
+        const verbalUnitForm = document.getElementById('verbal-unit-form');
+        const verbalUnitIdDisplay = document.getElementById('verbal-unit-id');
+        const syntacticType = document.getElementById('syntactic-type');
+        const semanticType = document.getElementById('semantic-type');
+        const level = document.getElementById('level');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const verbalUnitTableBody = document.getElementById('verbal-unit-table-body');
+        const verbalUnitSelect = document.getElementById('verbal-unit-select');
+        const assignmentDisplay = document.getElementById('assignment-display');
+
+        // State management
+        let tokens = [];
+        let sentenceAdverbialId = null; // ID of sentence adverbial or 0 for asyndeton
+        let stage1Complete = false;
+        let verbalUnits = [];
+        let verbalUnitIdCounter = 1;
+        let sentenceId = generateUUID();
+        let editingUnitId = null;
+        let tokenAssignments = []; // { tokenId: number, verbalUnitId: string }
+
+        // Default sentence from Lysias
+        const defaultSentence = "περὶ τούτου γὰρ μόνου τοῦ ἀδικήματος καὶ ἐν δημοκρατίᾳ καὶ ὀλιγαρχίᾳ ἡ αὐτὴ τιμωρία τοῖς ἀσθενεστάτοις πρὸς τοὺς τὰ μέγιστα δυναμένους ἀποδέδοται, ὥστε τὸν χείριστον τῶν αὐτῶν τυγχάνειν τῷ βελτίστῳ";
+        input.value = defaultSentence;
+
+        // Tokenize the input sentence
+        function tokenize(sentence) {
+            const tokens = [];
+            let currentToken = '';
+            let lexicalId = 1;
+            const punctuation = [',', '.', ';', ':'];
+
+            for (let i = 0; i < sentence.length; i++) {
+                const char = sentence[i];
+                if (/\s/.test(char)) {
+                    if (currentToken) {
+                        tokens.push({ text: currentToken, type: 'lexical', id: lexicalId++ });
+                        currentToken = '';
+                    }
+                    tokens.push({ text: char, type: 'white-space', id: null });
+                } else if (punctuation.includes(char)) {
+                    if (currentToken) {
+                        tokens.push({ text: currentToken, type: 'lexical', id: lexicalId++ });
+                        currentToken = '';
+                    }
+                    tokens.push({ text: char, type: 'punctuation', id: null });
+                } else {
+                    currentToken += char;
+                }
+            }
+            if (currentToken) {
+                tokens.push({ text: currentToken, type: 'lexical', id: lexicalId++ });
+            }
+            return tokens;
+        }
+
+        // Update inline token display (Stage 1)
+        function updateTokenDisplay() {
+            tokenOutput.innerHTML = '';
+            tokens.forEach((token, index) => {
+                const span = document.createElement('span');
+                if (token.type === 'lexical') {
+                    const isAdverbial = token.id === sentenceAdverbialId;
+                    const isRoot = token.id === 0;
+                    span.className = `token-lexical${isAdverbial ? ' sentence-adverbial' : ''}${isRoot ? ' root-token' : ''}`;
+                    span.innerHTML = `${token.text}<sup class="token-id">${token.id}</sup>`;
+                    span.dataset.index = index;
+                    if (!stage1Complete && !asyndetonCheckbox.checked && !isRoot) {
+                        span.addEventListener('click', () => selectSentenceAdverbial(index));
+                    }
+                } else if (token.type === 'white-space') {
+                    span.className = 'token-white-space';
+                    span.textContent = token.text;
+                } else if (token.type === 'punctuation') {
+                    span.className = 'token-punctuation';
+                    span.textContent = token.text;
+                }
+                tokenOutput.appendChild(span);
+            });
+            updateStatus();
+        }
+
+        // Handle sentence adverbial selection for Stage 1
+        function selectSentenceAdverbial(index) {
+            if (asyndetonCheckbox.checked || stage1Complete) return;
+            if (tokens[index].type !== 'lexical') return;
+            sentenceAdverbialId = tokens[index].id;
+            stage1Complete = true;
+            updateTokenDisplay();
+            updateStage2Visibility();
+        }
+
+        // Update status message and stage visibility
+        function updateStatus() {
+            if (asyndetonCheckbox.checked) {
+                stage1Complete = true;
+                status.textContent = 'Stage 1 complete (asyndeton selected, root token added). Stage 2 unlocked.';
+            } else if (sentenceAdverbialId !== null) {
+                status.textContent = 'Stage 1 complete (sentence adverbial selected). Stage 2 unlocked.';
+            } else {
+                stage1Complete = false;
+                status.textContent = 'Stage 1: Select a sentence adverbial or check asyndeton.';
+            }
+            updateStage2Visibility();
+        }
+
+        // Show/hide Stage 2 and 3 sections
+        function updateStage2Visibility() {
+            stage2Section.style.display = stage1Complete ? 'block' : 'none';
+            updateStage3Visibility();
+            updateVerbalUnitForm();
+        }
+
+        // Show/hide Stage 3 section
+        function updateStage3Visibility() {
+            stage3Section.style.display = verbalUnits.length > 0 ? 'block' : 'none';
+            updateVerbalUnitSelect();
+            updateAssignmentDisplay(); // Ensure unassigned tokens are populated
+        }
+
+        // Update verbal unit form ID display
+        function updateVerbalUnitForm() {
+            verbalUnitIdDisplay.textContent = editingUnitId || `VU${verbalUnitIdCounter}`;
+        }
+
+        // Handle verbal unit confirmation or editing
+        confirmBtn.addEventListener('click', () => {
+            if (!stage1Complete) return;
+            let unitId;
+            if (editingUnitId) {
+                const unitIndex = verbalUnits.findIndex(u => u.id === editingUnitId);
+                if (unitIndex !== -1) {
+                    verbalUnits[unitIndex] = {
+                        id: editingUnitId,
+                        syntacticType: syntacticType.value,
+                        semanticType: semanticType.value,
+                        level: parseInt(level.value)
+                    };
+                }
+                unitId = editingUnitId;
+                editingUnitId = null;
+                confirmBtn.textContent = 'Confirm Verbal Unit';
+            } else {
+                unitId = `VU${verbalUnitIdCounter++}`;
+                verbalUnits.push({
+                    id: unitId,
+                    syntacticType: syntacticType.value,
+                    semanticType: semanticType.value,
+                    level: parseInt(level.value)
+                });
+            }
+            updateVerbalUnitTable();
+            syntacticType.selectedIndex = 0;
+            semanticType.selectedIndex = 0;
+            level.selectedIndex = 0;
+            updateVerbalUnitForm();
+            updateStage3Visibility();
+        });
+
+        // Handle verbal unit editing
+        function editVerbalUnit(id) {
+            const unit = verbalUnits.find(u => u.id === id);
+            if (unit) {
+                editingUnitId = id;
+                syntacticType.value = unit.syntacticType;
+                semanticType.value = unit.semanticType;
+                level.value = unit.level;
+                confirmBtn.textContent = 'Save Changes';
+                updateVerbalUnitForm();
+            }
+        }
+
+        // Handle verbal unit deletion
+        function deleteVerbalUnit(id) {
+            verbalUnits = verbalUnits.filter(u => u.id !== id);
+            tokenAssignments = tokenAssignments.filter(a => a.verbalUnitId !== id);
+            updateVerbalUnitTable();
+            updateTokenDisplay();
+            updateAssignmentDisplay();
+            updateStage3Visibility();
+        }
+
+        // Update verbal unit table
+        function updateVerbalUnitTable() {
+            verbalUnitTableBody.innerHTML = '';
+            verbalUnits.forEach(unit => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${unit.id}</td>
+                    <td>${unit.syntacticType}</td>
+                    <td>${unit.semanticType}</td>
+                    <td>${unit.level}</td>
+                    <td>
+                        <button class="action-btn edit-btn" data-id="${unit.id}">Edit</button>
+                        <button class="action-btn delete-btn" data-id="${unit.id}">Delete</button>
+                    </td>
+                `;
+                verbalUnitTableBody.appendChild(row);
+            });
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editVerbalUnit(btn.dataset.id));
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteVerbalUnit(btn.dataset.id));
+            });
+        }
+
+        // Update verbal unit dropdown
+        function updateVerbalUnitSelect() {
+            verbalUnitSelect.innerHTML = verbalUnits.length === 0 ? '<option value="">No verbal units defined</option>' : '';
+            verbalUnits.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit.id;
+                option.textContent = `${unit.id} (${unit.syntacticType})`;
+                verbalUnitSelect.appendChild(option);
+            });
+        }
+
+        // Toggle token assignment
+        function toggleTokenAssignment(tokenId) {
+            if (!verbalUnits.length) return;
+            const selectedUnitId = verbalUnitSelect.value;
+            if (!selectedUnitId) return;
+            const existingAssignment = tokenAssignments.find(a => a.tokenId === tokenId);
+            if (existingAssignment) {
+                tokenAssignments = tokenAssignments.filter(a => a.tokenId !== tokenId);
+            } else {
+                tokenAssignments = tokenAssignments.filter(a => a.tokenId !== tokenId);
+                tokenAssignments.push({ tokenId, verbalUnitId: selectedUnitId });
+            }
+            updateAssignmentDisplay();
+        }
+
+        // Update token assignment display
+        function updateAssignmentDisplay() {
+            assignmentDisplay.innerHTML = '';
+            verbalUnits.forEach(unit => {
+                const assignedTokens = tokenAssignments
+                    .filter(a => a.verbalUnitId === unit.id)
+                    .map(a => tokens.find(t => t.id === a.tokenId))
+                    .filter(t => t);
+                if (assignedTokens.length > 0) {
+                    const row = document.createElement('div');
+                    row.className = `verbal-unit-row level-${unit.level}`;
+                    row.innerHTML = `
+                        <div class="unit-info">${unit.id} (${unit.syntacticType}, ${unit.semanticType}, Level ${unit.level})</div>
+                        <div class="tokens"></div>
+                    `;
+                    const tokensContainer = row.querySelector('.tokens');
+                    assignedTokens.forEach(token => {
+                        const span = document.createElement('span');
+                        const vuIndex = verbalUnits.findIndex(u => u.id === unit.id);
+                        span.className = `token-lexical assigned-vu${Math.min(vuIndex + 1, 5)}`;
+                        span.innerHTML = `${token.text}<sup class="token-id">${token.id}</sup>`;
+                        span.dataset.tokenId = token.id;
+                        span.addEventListener('click', () => toggleTokenAssignment(token.id));
+                        tokensContainer.appendChild(span);
+                    });
+                    assignmentDisplay.appendChild(row);
+                }
+            });
+            // Always display unassigned tokens
+            const unassignedTokens = tokens.filter(t => 
+                t.type === 'lexical' && 
+                t.id !== sentenceAdverbialId && 
+                t.id !== 0 && 
+                !tokenAssignments.find(a => a.tokenId === t.id)
+            );
+            const unassignedDiv = document.createElement('div');
+            unassignedDiv.id = 'unassigned-tokens';
+            unassignedDiv.innerHTML = '<div class="unit-info">Unassigned Tokens:</div><div class="tokens"></div>';
+            const tokensContainer = unassignedDiv.querySelector('.tokens');
+            unassignedTokens.forEach(token => {
+                const span = document.createElement('span');
+                span.className = 'token-lexical';
+                span.innerHTML = `${token.text}<sup class="token-id">${token.id}</sup>`;
+                span.dataset.tokenId = token.id;
+                span.addEventListener('click', () => toggleTokenAssignment(token.id));
+                tokensContainer.appendChild(span);
+            });
+            assignmentDisplay.appendChild(unassignedDiv);
+        }
+
+        // Handle input changes
+        input.addEventListener('input', () => {
+            const sentence = input.value.trim();
+            tokens = tokenize(sentence);
+            sentenceAdverbialId = null;
+            stage1Complete = false;
+            verbalUnits = [];
+            verbalUnitIdCounter = 1;
+            sentenceId = generateUUID();
+            tokenAssignments = [];
+            updateTokenDisplay();
+            updateVerbalUnitTable();
+            updateAssignmentDisplay();
+            updateStatus();
+        });
+
+        // Handle asyndeton checkbox changes
+        asyndetonCheckbox.addEventListener('change', () => {
+            sentenceAdverbialId = asyndetonCheckbox.checked ? 0 : null;
+            if (asyndetonCheckbox.checked) {
+                tokens = tokens.filter(t => t.id !== 0);
+                tokens.unshift({ text: "ROOT", type: 'lexical', id: 0 });
+                stage1Complete = true;
+            } else {
+                tokens = tokens.filter(t => t.id !== 0);
+                stage1Complete = false;
+            }
+            updateTokenDisplay();
+            updateStage2Visibility();
+        });
+
+        // Initialize with default sentence
+        tokens = tokenize(defaultSentence);
+        updateTokenDisplay();
+    </script>
+</body>
+</html>
