@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ancient Greek Syntax Analyzer</title>
-    <!-- Ancient Greek Syntax Analyzer v0.0.2, June 4, 2025: Added multiple token assignments, restored default Lysias sentence -->
+    <!-- Ancient Greek Syntax Analyzer v0.0.3, June 5, 2025: Added Stage 4, fixed token display order -->
     <style>
         /* Modern, minimalist UI */
         body {
@@ -34,7 +34,7 @@
             color: #4a4a4a;
             margin-bottom: 10px;
         }
-        #input-section, #stage1-section, #stage2-section, #stage3-section {
+        #input-section, #stage1-section, #stage2-section, #stage3-section, #stage4-section {
             width: 80%;
             max-width: 700px;
             margin-bottom: 20px;
@@ -87,6 +87,9 @@
             border-color: #fbc02d;
             cursor: default;
         }
+        .token-lexical.analyzed {
+            background: #e8f5e9; /* Light green for analyzed tokens */
+        }
         .token-lexical.assigned-vu1 {
             border-color: #005ea2; /* Blue for VU1 */
         }
@@ -118,10 +121,10 @@
             color: #1a1a1a;
             margin-bottom: 20px;
         }
-        #stage2-section, #stage3-section {
+        #stage2-section, #stage3-section, #stage4-section {
             display: none;
         }
-        #verbal-unit-form {
+        #verbal-unit-form, #analysis-form {
             background: #fff;
             padding: 15px;
             border: 1px solid #d1d1d1;
@@ -131,14 +134,14 @@
             flex-direction: column;
             gap: 10px;
         }
-        #verbal-unit-form label {
+        #verbal-unit-form label, #analysis-form label {
             font-size: 0.9em;
             font-weight: 500;
         }
-        #verbal-unit-form select {
+        #verbal-unit-form select, #analysis-form select {
             padding: 8px;
             border: 1px solid #d1d1d1;
-            border-radius: 6px;
+            border-radius: 4px;
             font-size: 0.9em;
             width: 100%;
         }
@@ -146,22 +149,32 @@
             font-size: 0.9em;
             padding: 8px;
             background: #f0f0f0;
-            border-radius: 6px;
+            border-radius: 4px;
         }
-        #confirm-btn {
+        #confirm-btn, #save-analysis-btn, #cancel-analysis-btn {
             padding: 10px;
             font-size: 0.95em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #confirm-btn, #save-analysis-btn {
             background: #005ea2;
             color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
         }
-        #confirm-btn:hover {
+        #confirm-btn:hover, #save-analysis-btn:hover {
             background: #003e73;
         }
-        #verbal-unit-table {
+        #cancel-analysis-btn {
+            background: #fff;
+            color: #1a1a1a;
+            border: 1px solid #d1d1d1;
+        }
+        #cancel-analysis-btn:hover {
+            background: #f0f0f0;
+        }
+        #verbal-unit-table, #analysis-table {
             width: 100%;
             border-collapse: collapse;
             background: #fff;
@@ -170,13 +183,13 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             margin-top: 15px;
         }
-        #verbal-unit-table th, #verbal-unit-table td {
+        #verbal-unit-table th, #verbal-unit-table td, #analysis-table th, #analysis-table td {
             padding: 10px;
             border: 1px solid #d1d1d1;
             text-align: left;
             font-size: 0.9em;
         }
-        #verbal-unit-table th {
+        #verbal-unit-table th, #analysis-table th {
             background: #f0f0f0;
             font-weight: 600;
         }
@@ -253,6 +266,44 @@
         #unassigned-tokens .tokens {
             display: inline;
         }
+        #analysis-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            border: 1px solid #d1d1d1;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: none;
+            z-index: 1000;
+        }
+        #analysis-popup h3 {
+            margin: 0 0 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+        #analysis-popup label {
+            display: block;
+            margin: 8px 0 4px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        #analysis-popup select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d1d1;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        #analysis-popup button {
+            margin-top: 15px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+            border-radius: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -293,381 +344,3 @@
             </select>
             <label for="level">Level (1–5):</label>
             <select id="level">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
-            <button id="confirm-btn">Confirm Verbal Unit</button>
-        </div>
-        <table id="verbal-unit-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Syntactic Type</th>
-                    <th>Semantic Type</th>
-                    <th>Level</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="verbal-unit-table-body"></tbody>
-        </table>
-    </div>
-    <div id="stage3-section">
-        <h2>Stage 3: Token Assignment</h2>
-        <p class="instructions">Select a verbal unit from the dropdown, then click tokens in the Unassigned Tokens list to assign them. Tokens can belong to multiple verbal units for nested structures (e.g., an attributive participle within a clause). Click assigned tokens (under a verbal unit) to unassign from that unit. The sentence adverbial or root token cannot be assigned.</p>
-        <div id="assignment-form">
-            <label for="verbal-unit-select">Assign to Verbal Unit:</label>
-            <select id="verbal-unit-select"></select>
-        </div>
-        <div id="assignment-display"></div>
-    </div>
-
-    <script>
-        // Generate a simple UUID for sentence ID
-        function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-                const r = Math.random() * 16 | 0;
-                const v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
-        // Initialize DOM elements
-        const input = document.getElementById('sentence-input');
-        const asyndetonCheckbox = document.getElementById('asyndeton-checkbox');
-        const tokenOutput = document.getElementById('token-output');
-        const status = document.getElementById('status');
-        const stage2Section = document.getElementById('stage2-section');
-        const stage3Section = document.getElementById('stage3-section');
-        const verbalUnitForm = document.getElementById('verbal-unit-form');
-        const verbalUnitIdDisplay = document.getElementById('verbal-unit-id');
-        const syntacticType = document.getElementById('syntactic-type');
-        const semanticType = document.getElementById('semantic-type');
-        const level = document.getElementById('level');
-        const confirmBtn = document.getElementById('confirm-btn');
-        const verbalUnitTableBody = document.getElementById('verbal-unit-table-body');
-        const verbalUnitSelect = document.getElementById('verbal-unit-select');
-        const assignmentDisplay = document.getElementById('assignment-display');
-
-        // State management
-        let tokens = [];
-        let sentenceAdverbialId = null; // ID of sentence adverbial or 0 for asyndeton
-        let stage1Complete = false;
-        let verbalUnits = [];
-        let verbalUnitIdCounter = 1;
-        let sentenceId = generateUUID();
-        let editingUnitId = null;
-        let tokenAssignments = []; // { tokenId: number, verbalUnitIds: string[] }
-
-        // Restored: Default sentence from Lysias
-        const defaultSentence = "περὶ τούτου γὰρ μόνου τοῦ ἀδικήματος καὶ ἐν δημοκρατίᾳ καὶ ὀλιγαρχίᾳ ἡ αὐτὴ τιμωρία τοῖς ἀσθενεστάτοις πρὸς τοὺς τὰ μέγιστα δυναμένους ἀποδέδοται, ὥστε τὸν χείριστον τῶν αὐτῶν τυγχάνειν τῷ βελτίστῳ";
-        input.value = defaultSentence; // Restored: Set textarea value
-
-        // Tokenize the input sentence
-        function tokenize(sentence) {
-            const tokens = [];
-            let currentToken = '';
-            let lexicalId = 1;
-            const punctuation = [',', '.', ';', ':'];
-
-            for (let i = 0; i < sentence.length; i++) {
-                const char = sentence[i];
-                if (/\s/.test(char)) {
-                    if (currentToken) {
-                        tokens.push({ text: currentToken, type: 'lexical', id: lexicalId++ });
-                        currentToken = '';
-                    }
-                    tokens.push({ text: char, type: 'white-space', id: null });
-                } else if (punctuation.includes(char)) {
-                    if (currentToken) {
-                        tokens.push({ text: currentToken, type: 'lexical', id: lexicalId++ });
-                        currentToken = '';
-                    }
-                    tokens.push({ text: char, type: 'punctuation', id: null });
-                } else {
-                    currentToken += char;
-                }
-            }
-            if (currentToken) {
-                tokens.push({ text: currentToken, type: 'lexical', id: lexicalId++ });
-            }
-            return tokens;
-        }
-
-        // Update inline token display (Stage 1)
-        function updateTokenDisplay() {
-            tokenOutput.innerHTML = '';
-            tokens.forEach((token, index) => {
-                const span = document.createElement('span');
-                if (token.type === 'lexical') {
-                    const isAdverbial = token.id === sentenceAdverbialId;
-                    const isRoot = token.id === 0;
-                    span.className = `token-lexical${isAdverbial ? ' sentence-adverbial' : ''}${isRoot ? ' root-token' : ''}`;
-                    span.innerHTML = `${token.text}<sup class="token-id">${token.id}</sup>`;
-                    span.dataset.index = index;
-                    if (!stage1Complete && !asyndetonCheckbox.checked && !isRoot) {
-                        span.addEventListener('click', () => selectSentenceAdverbial(index));
-                    }
-                } else if (token.type === 'white-space') {
-                    span.className = 'token-white-space';
-                    span.textContent = token.text;
-                } else if (token.type === 'punctuation') {
-                    span.className = 'token-punctuation';
-                    span.textContent = token.text;
-                }
-                tokenOutput.appendChild(span);
-            });
-            updateStatus();
-        }
-
-        // Handle sentence adverbial selection for Stage 1
-        function selectSentenceAdverbial(index) {
-            if (asyndetonCheckbox.checked || stage1Complete) return;
-            if (tokens[index].type !== 'lexical') return;
-            sentenceAdverbialId = tokens[index].id;
-            stage1Complete = true;
-            updateTokenDisplay();
-            updateStage2Visibility();
-        }
-
-        // Update status message and stage visibility
-        function updateStatus() {
-            if (asyndetonCheckbox.checked) {
-                stage1Complete = true;
-                status.textContent = 'Stage 1 complete (asyndeton selected, root token added). Stage 2 unlocked.';
-            } else if (sentenceAdverbialId !== null) {
-                status.textContent = 'Stage 1 complete (sentence adverbial selected). Stage 2 unlocked.';
-            } else {
-                stage1Complete = false;
-                status.textContent = 'Stage 1: Select a sentence adverbial or check asyndeton.';
-            }
-            updateStage2Visibility();
-        }
-
-        // Show/hide Stage 2 and 3 sections
-        function updateStage2Visibility() {
-            stage2Section.style.display = stage1Complete ? 'block' : 'none';
-            updateStage3Visibility();
-            updateVerbalUnitForm();
-        }
-
-        // Show/hide Stage 3 section
-        function updateStage3Visibility() {
-            stage3Section.style.display = verbalUnits.length > 0 ? 'block' : 'none';
-            updateVerbalUnitSelect();
-            updateAssignmentDisplay();
-        }
-
-        // Update verbal unit form ID display
-        function updateVerbalUnitForm() {
-            verbalUnitIdDisplay.textContent = editingUnitId || `VU${verbalUnitIdCounter}`;
-        }
-
-        // Handle verbal unit confirmation or editing
-        confirmBtn.addEventListener('click', () => {
-            if (!stage1Complete) return;
-            let unitId;
-            if (editingUnitId) {
-                const unitIndex = verbalUnits.findIndex(u => u.id === editingUnitId);
-                if (unitIndex !== -1) {
-                    verbalUnits[unitIndex] = {
-                        id: editingUnitId,
-                        syntacticType: syntacticType.value,
-                        semanticType: semanticType.value,
-                        level: parseInt(level.value)
-                    };
-                }
-                unitId = editingUnitId;
-                editingUnitId = null;
-                confirmBtn.textContent = 'Confirm Verbal Unit';
-            } else {
-                unitId = `VU${verbalUnitIdCounter++}`;
-                verbalUnits.push({
-                    id: unitId,
-                    syntacticType: syntacticType.value,
-                    semanticType: semanticType.value,
-                    level: parseInt(level.value)
-                });
-            }
-            updateVerbalUnitTable();
-            syntacticType.selectedIndex = 0;
-            semanticType.selectedIndex = 0;
-            level.selectedIndex = 0;
-            updateVerbalUnitForm();
-            updateStage3Visibility();
-        });
-
-        // Handle verbal unit editing
-        function editVerbalUnit(id) {
-            const unit = verbalUnits.find(u => u.id === id);
-            if (unit) {
-                editingUnitId = id;
-                syntacticType.value = unit.syntacticType;
-                semanticType.value = unit.semanticType;
-                level.value = unit.level;
-                confirmBtn.textContent = 'Save Changes';
-                updateVerbalUnitForm();
-            }
-        }
-
-        // Handle verbal unit deletion
-        function deleteVerbalUnit(id) {
-            verbalUnits = verbalUnits.filter(u => u.id !== id);
-            tokenAssignments.forEach(assignment => {
-                assignment.verbalUnitIds = assignment.verbalUnitIds.filter(vuId => vuId !== id);
-            });
-            tokenAssignments = tokenAssignments.filter(a => a.verbalUnitIds.length > 0);
-            updateVerbalUnitTable();
-            updateTokenDisplay();
-            updateAssignmentDisplay();
-            updateStage3Visibility();
-        }
-
-        // Update verbal unit table
-        function updateVerbalUnitTable() {
-            verbalUnitTableBody.innerHTML = '';
-            verbalUnits.forEach(unit => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${unit.id}</td>
-                    <td>${unit.syntacticType}</td>
-                    <td>${unit.semanticType}</td>
-                    <td>${unit.level}</td>
-                    <td>
-                        <button class="action-btn edit-btn" data-id="${unit.id}">Edit</button>
-                        <button class="action-btn delete-btn" data-id="${unit.id}">Delete</button>
-                    </td>
-                `;
-                verbalUnitTableBody.appendChild(row);
-            });
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => editVerbalUnit(btn.dataset.id));
-            });
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => deleteVerbalUnit(btn.dataset.id));
-            });
-        }
-
-        // Update verbal unit dropdown
-        function updateVerbalUnitSelect() {
-            verbalUnitSelect.innerHTML = verbalUnits.length === 0 ? '<option value="">No verbal units defined</option>' : '';
-            verbalUnits.forEach(unit => {
-                const option = document.createElement('option');
-                option.value = unit.id;
-                option.textContent = `${unit.id} (${unit.syntacticType})`;
-                verbalUnitSelect.appendChild(option);
-            });
-            verbalUnitSelect.addEventListener('change', updateAssignmentDisplay);
-        }
-
-        // Toggle token assignment
-        function toggleTokenAssignment(tokenId) {
-            if (!verbalUnits.length) return;
-            const selectedUnitId = verbalUnitSelect.value;
-            if (!selectedUnitId) return;
-            let assignment = tokenAssignments.find(a => a.tokenId === tokenId);
-            if (assignment) {
-                if (assignment.verbalUnitIds.includes(selectedUnitId)) {
-                    assignment.verbalUnitIds = assignment.verbalUnitIds.filter(vuId => vuId !== selectedUnitId);
-                    if (assignment.verbalUnitIds.length === 0) {
-                        tokenAssignments = tokenAssignments.filter(a => a.tokenId !== tokenId);
-                    }
-                } else {
-                    assignment.verbalUnitIds.push(selectedUnitId);
-                }
-            } else {
-                tokenAssignments.push({ tokenId, verbalUnitIds: [selectedUnitId] });
-            }
-            updateAssignmentDisplay();
-        }
-
-        // Update token assignment display
-        function updateAssignmentDisplay() {
-            assignmentDisplay.innerHTML = '';
-            verbalUnits.forEach(unit => {
-                const assignedTokens = tokenAssignments
-                    .filter(a => a.verbalUnitIds.includes(unit.id))
-                    .map(a => tokens.find(t => t.id === a.tokenId))
-                    .filter(t => t);
-                if (assignedTokens.length > 0) {
-                    const row = document.createElement('div');
-                    row.className = `verbal-unit-row level-${unit.level}`;
-                    row.innerHTML = `
-                        <div class="unit-info">${unit.id} (${unit.syntacticType}, ${unit.semanticType}, Level ${unit.level})</div>
-                        <div class="tokens"></div>
-                    `;
-                    const tokensContainer = row.querySelector('.tokens');
-                    assignedTokens.forEach(token => {
-                        const span = document.createElement('span');
-                        const vuIndex = verbalUnits.findIndex(u => u.id === unit.id);
-                        span.className = `token-lexical assigned-vu${Math.min(vuIndex + 1, 5)}`;
-                        span.innerHTML = `${token.text}<sup class="token-id">${token.id}</sup>`;
-                        span.dataset.tokenId = token.id;
-                        span.addEventListener('click', () => toggleTokenAssignment(token.id));
-                        tokensContainer.appendChild(span);
-                    });
-                    assignmentDisplay.appendChild(row);
-                }
-            });
-            // Always display all eligible tokens in unassigned list
-            const unassignedTokens = tokens.filter(t => 
-                t.type === 'lexical' && 
-                t.id !== sentenceAdverbialId && 
-                t.id !== 0
-            );
-            const unassignedDiv = document.createElement('div');
-            unassignedDiv.id = 'unassigned-tokens';
-            unassignedDiv.innerHTML = '<div class="unit-info">Unassigned Tokens:</div><div class="tokens"></div>';
-            const tokensContainer = unassignedDiv.querySelector('.tokens');
-            unassignedTokens.forEach(token => {
-                const span = document.createElement('span');
-                const assignment = tokenAssignments.find(a => a.tokenId === token.id);
-                const isAssignedToCurrent = assignment && assignment.verbalUnitIds.includes(verbalUnitSelect.value);
-                span.className = `token-lexical${isAssignedToCurrent ? ` assigned-vu${Math.min(verbalUnits.findIndex(u => u.id === verbalUnitSelect.value) + 1, 5)}` : ''}`;
-                span.innerHTML = `${token.text}<sup class="token-id">${token.id}</sup>`;
-                span.dataset.tokenId = token.id;
-                span.addEventListener('click', () => toggleTokenAssignment(token.id));
-                tokensContainer.appendChild(span);
-            });
-            assignmentDisplay.appendChild(unassignedDiv);
-        }
-
-        // Handle input changes
-        input.addEventListener('input', () => {
-            const sentence = input.value.trim();
-            tokens = tokenize(sentence);
-            sentenceAdverbialId = null;
-            stage1Complete = false;
-            verbalUnits = [];
-            verbalUnitIdCounter = 1;
-            sentenceId = generateUUID();
-            tokenAssignments = [];
-            updateTokenDisplay();
-            updateVerbalUnitTable();
-            updateAssignmentDisplay();
-            updateStatus();
-        });
-
-        // Handle asyndeton checkbox changes
-        asyndetonCheckbox.addEventListener('change', () => {
-            sentenceAdverbialId = asyndetonCheckbox.checked ? 0 : null;
-            if (asyndetonCheckbox.checked) {
-                tokens = tokens.filter(t => t.id !== 0);
-                tokens.unshift({ text: "ROOT", type: 'lexical', id: 0 });
-                stage1Complete = true;
-            } else {
-                tokens = tokens.filter(t => t.id !== 0);
-                stage1Complete = false;
-            }
-            updateTokenDisplay();
-            updateStage2Visibility();
-        });
-
-        // Initialize with default sentence
-        tokens = tokenize(defaultSentence);
-        updateTokenDisplay();
-    </script>
-</body>
-</html>
