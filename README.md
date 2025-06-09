@@ -1,39 +1,31 @@
 # Ancient Greek Syntax Analyzer
 
-A web application for students to tokenize and analyze Ancient Greek syntax, supporting Stages 1–3.
+A web application for students to tokenize and analyze the syntax of Ancient Greek sentences, designed for educational use in classical studies. Supports four stages: tokenization, clause/phrase analysis, token assignment, and syntactic relationship analysis, with CTS-URNs for texts and CITE2-URNs for analyses.
 
 ## Features
-- Input an Ancient Greek sentence (pre-populated with a Lysias sentence).
-- Tokenize into white-space, punctuation, and lexical tokens with IDs (1, 2, …).
+- Input an Ancient Greek sentence (pre-populated with a Lysias sentence, identified by CTS-URN).
 - **Stage 1: Sentence Adverbial Identification**:
-  - Click a lexical token to select a sentence adverbial (yellow) or check asyndeton (adds `ROOT⁰`).
-  - Adverbial or root token will be the syntax graph root.
+  - Tokenize into white-space, punctuation, and lexical tokens (IDs 1, 2, …).
+  - Select a sentence adverbial (yellow highlight) or asyndeton (`ROOT⁰` token).
+  - Sets the root for a syntax graph.
 - **Stage 2: Clause/Phrase Analysis**:
-  - Hidden until Stage 1 complete.
-  - Define verbal units with IDs (e.g., VU1), Syntactic Type, Semantic Type, Level (1–5).
-  - Form shows ID. Table with Edit/Delete.
+  - Define verbal units with IDs (e.g., `VU1`), Syntactic Type, Semantic Type, Level (1–5).
+  - Form displays ID; table allows Edit/Delete.
 - **Stage 3: Token Assignment**:
-  - Available after one verbal unit.
-  - Select a unit, click tokens in “Unassigned Tokens” (pre-populated with eligible tokens) to assign (colored borders). Click assigned tokens to unassign.
-  - Sentence adverbial/root token ineligible.
-  - Units displayed with tokens, indented by level (1em/level). Unassigned tokens listed below.
-- Instructions guide each stage. Prepares for export with sentence ID.
+  - Assign tokens to verbal units via “Unassigned Tokens” list (pre-populated).
+  - Tokens can belong to multiple units (e.g., for nested clauses and participles).
+  - Tokens display in sentence order.
+  - Unassign by clicking assigned tokens per unit. Adverbial/`ROOT⁰` ineligible.
+  - Displays units with tokens, indented by level (1em/level).
+- **Stage 4: Syntactic Relationship Analysis**:
+  - Define relationships between tokens (Node 1, Node 1 Relation, Node 2, Node 2 Relation).
+  - Inline table editing with dropdowns for token IDs and text inputs for relations.
+  - Visualizes a directed graph (vis.js) rooted at adverbial/`ROOT⁰`.
+  - Analysis identified by CITE2-URN.
+- Modern, minimalist UI with clear instructions.
+- Prepares for CSV/TSV export with `sentenceId`.
 
-## Setup
-```bash
-git clone https://github.com/[your-repo]/ancient-greek-syntax-analyzer.git
-```
-
-
-- Open index.html in a browser.
-
-## Usage
-
-Paste/edit sentence.
-
-- Stage 1: Click a token for adverbial or check asyndeton.
-
-- Stage 2: Define/edit verbal units.
-
-- Stage 3: Assign tokens via “Unassigned Tokens” list, unassign via verbal unit tokens.
-
+## Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Eumaeus/ancient-greek-syntax-analyzer.git
