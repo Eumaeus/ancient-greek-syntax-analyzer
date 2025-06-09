@@ -35,9 +35,10 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
   - Select a verbal unit from the dropdown (e.g., `VU1 (Subordinate Clause)`).
   - The “Unassigned Tokens” list shows tokens not yet assigned to the selected unit.
   - Click a token in “Unassigned Tokens” to assign it to the selected unit; it moves to the unit’s assigned list (in sentence order) and disappears from “Unassigned Tokens.”
-  - Click an assigned token under a verbal unit to unassign it, returning it to “Unassigned Tokens.”
+  - Click an assigned token under the selected unit to unassign it, returning it to “Unassigned Tokens.”
   - Switch to a new verbal unit to start with an empty assigned list and all eligible tokens in “Unassigned Tokens.”
   - Switch to a previously worked-on unit to restore its last assigned/unassigned state.
+  - All verbal units and their tokens are displayed, sorted by the first token’s sentence order, with distinct border colors per unit and the current unit’s tokens highlighted (green background).
   - The adverbial or `ROOT⁰` is yellow and non-assignable.
 - **Display**:
   - Verbal units show assigned tokens, indented by level (1em per level).
