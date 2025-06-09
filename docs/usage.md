@@ -33,14 +33,15 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
 - **Goal**: Assign lexical tokens to verbal units, allowing tokens to belong to multiple units for nested structures (e.g., an attributive participle within a clause).
 - **Steps**:
   - Select a verbal unit from the dropdown (e.g., `VU1 (Subordinate Clause)`).
-  - The “Unassigned Tokens” list shows all eligible tokens (excluding the adverbial/`ROOT⁰`), even if assigned to other units.
-  - Click a token in the list to assign it to the selected unit (adds colored border, e.g., blue for `VU1`).
-  - Click an assigned token under a verbal unit to unassign it from that unit only.
-  - Assigned tokens are displayed in sentence order (e.g., `περὶ¹` before `τούτου²`).
+  - The “Unassigned Tokens” list shows tokens not yet assigned to the selected unit.
+  - Click a token in “Unassigned Tokens” to assign it to the selected unit; it moves to the unit’s assigned list (in sentence order) and disappears from “Unassigned Tokens.”
+  - Click an assigned token under a verbal unit to unassign it, returning it to “Unassigned Tokens.”
+  - Switch to a new verbal unit to start with an empty assigned list and all eligible tokens in “Unassigned Tokens.”
+  - Switch to a previously worked-on unit to restore its last assigned/unassigned state.
   - The adverbial or `ROOT⁰` is yellow and non-assignable.
 - **Display**:
   - Verbal units show assigned tokens, indented by level (1em per level).
-  - “Unassigned Tokens” lists all tokens available for the current unit selection.
+  - “Unassigned Tokens” lists tokens available for the current unit.
 - **Result**: Prepares for Stage 4.
 
 ### Stage 4: Syntactic Relationship Analysis
