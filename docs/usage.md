@@ -48,14 +48,14 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
 ### Stage 4: Syntactic Relationship Analysis
 - **Goal**: Define syntactic relationships between lexical tokens to build a directed graph, identified by a CITE2-URN.
 - **Steps**:
-  - In the table, for each token:
+  - The graph above the table shows a top-down view, rooted at the sentence adverbial (e.g., `γὰρ`) or notional `ROOT⁰` (for asyndeton), with edges labeled by relations. Only the root appears initially; tokens are added after assigning at least one relation.
+  - In the table below, for each token:
     - **Token ID** and **Text** are shown.
     - **Node 1**: Select a token ID to link to (e.g., `3: γὰρ` for the root).
     - **Node 1 Relation**: Enter the relationship (e.g., “verb” for a main verb).
     - **Node 2**: Optionally select another token ID (e.g., for a relative pronoun’s second role).
     - **Node 2 Relation**: Enter the second relationship (if applicable).
-  - The graph visualizes tokens as nodes (ID + text) and relationships as labeled edges (e.g., “verb” from verb to root).
-  - The root is pre-populated (`ROOT⁰` for asyndeton or the adverbial, e.g., `γὰρ³`).
+  - The graph updates as relations are assigned, remaining zoomable and interactive.
 - **Result**: A graph representing the sentence’s syntactic structure, ready for export.
 
 ## Tips
