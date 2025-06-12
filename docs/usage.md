@@ -6,7 +6,7 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
 1. Open `src/index.html` in a modern web browser (e.g., Chrome, Firefox).
 2. The textarea is pre-populated with a sentence from Lysias: "περὶ τούτου γὰρ μόνου...".
 3. A CTS-URN identifies the sentence (e.g., `urn:cts:greekLit:tlg0054.tlg001.perseus-grc1:1.1.1`).
-4. Edit the sentence or (in future versions) load a new one by CTS-URN.
+4. Edit the sentence, load a new one by CTS-URN (in future versions), or import a CEX file to restore an analysis.
 
 ## Stages
 ### Stage 1: Sentence Adverbial Identification
@@ -15,6 +15,7 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
   - View tokenized sentence (lexical tokens in boxes with superscripted IDs, e.g., `περὶ¹`).
   - Click a lexical token to select it as the adverbial (highlights yellow).
   - Or check the “This sentence illustrates *asyndeton*” box to add a notional `ROOT⁰` token.
+  - To load a saved analysis, click “Import CEX” and select a `.cex` file.
 - **Result**: The adverbial or `ROOT⁰` is the root for the syntax graph. Stage 2 unlocks.
 
 ### Stage 2: Clause/Phrase Analysis
@@ -55,13 +56,15 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
     - **Node 1 Relation**: Enter the relationship (e.g., “verb” for a main verb).
     - **Node 2**: Optionally select another token ID (e.g., for a relative pronoun’s second role).
     - **Node 2 Relation**: Enter the second relationship (if applicable).
+  - Click “Export CEX” to save the analysis as a `.cex` file.
   - The graph updates as relations are assigned, remaining zoomable and interactive.
 - **Result**: A graph representing the sentence’s syntactic structure, ready for export.
 
 ## Tips
-- Changing the input resets all stages.
+- Changing the input resets all stages unless importing a CEX file.
 - Use Edit/Delete in Stage 2 to refine units.
 - Tokens can link to one or two other tokens (e.g., relative pronouns to antecedent and clause role).
+- Export CEX at any stage to save progress; import to resume.
 
 ## Support
 See [development.md](development.md) or file issues on GitHub.
