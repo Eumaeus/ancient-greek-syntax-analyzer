@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ancient Greek Syntax Analyzer</title>
-    <!-- Ancient Greek Syntax Analyzer v0.0.9, June 12, 2025: Refactored to two stages, added Token 0 (Sentence Root), fixed CEX import bug -->
+    <!-- Ancient Greek Syntax Analyzer v0.0.10, June 13, 2025: Fixed CEX import (verbal units, token assignments), fixed relationship bug -->
     <!-- vis.js CDN -->
     <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
     <style>
@@ -388,7 +388,7 @@
         let tokenAnalyses = []; // { tokenId: number, node1Id: number, node1Relation: string, node2Id: number, node2Relation: string }
         let graphNetwork = null;
         let ctsUrn = 'urn:cts:greekLit:tlg0054.tlg001.perseus-grc1:1.1.1';
-        let cite2Urn = `urn:cite2:analyzer:analysis:2025-06-12-${sentenceId}`;
+        let cite2Urn = `urn:cite2:analyzer:analysis:2025-06-13-${sentenceId}`;
 
         // Default sentence from Lysias
         const defaultSentence = "περὶ τούτου γὰρ μόνου τοῦ ἀδικήματος καὶ ἐν δημοκρατίᾳ καὶ ὀλιγαρχίᾳ ἡ αὐτὴ τιμωρία τοῖς ἀσθενεστάτοις πρὸς τοὺς τὰ μέγιστα δυναμένους ἀποδέδοται, ὥστε τὸν χείριστον τῶν αὐτῶν τυγχάνειν τῷ βελτίστῳ";
@@ -546,7 +546,14 @@
                 option.textContent = `${unit.id} (${unit.syntacticType})`;
                 verbalUnitSelect.appendChild(option);
             });
+            // Reattach change event listener (Fixed CEX import bug)
+            verbalUnitSelect.removeEventListener('change', updateAssignmentDisplay);
             verbalUnitSelect.addEventListener('change', updateAssignmentDisplay);
+            // Select first unit if available
+            if (verbalUnits.length > 0 && !verbalUnitSelect.value) {
+                verbalUnitSelect.value = verbalUnits[0].id;
+                updateAssignmentDisplay();
+            }
         }
 
         // Toggle token assignment
@@ -671,14 +678,16 @@
             cite2UrnDisplay.textContent = cite2Urn;
         }
 
-        // Update token relationship
+        // Update token relationship (Fixed relationship bug)
         function updateAnalysis(tokenId, field, value) {
             let analysis = tokenAnalyses.find(a => a.tokenId === tokenId);
             if (!analysis) {
                 analysis = { tokenId };
                 tokenAnalyses.push(analysis);
             }
-            analysis[field] = value === '' ? null : (field.includes('Id') ? parseInt(value) : value);
+            // Parse node IDs as numbers to avoid undefined (Fixed relationship bug)
+            analysis[field] = value === '' ? null : (field.includes('Id') ? parseInt(value, 10) : value);
+            // Clean up empty analyses
             if (!analysis.node1Id && !analysis.node1Relation && !analysis.node2Id && !analysis.node2Relation) {
                 tokenAnalyses = tokenAnalyses.filter(a => a.tokenId !== tokenId);
             }
@@ -689,11 +698,11 @@
         function updateGraph() {
             const activeTokenIds = new Set([0]); // Always include Sentence Root
             tokenAnalyses.forEach(analysis => {
-                if (analysis.node1Id && analysis.node1Relation) {
+                if (analysis.node1Id !== null && analysis.node1Relation) {
                     activeTokenIds.add(analysis.tokenId);
                     activeTokenIds.add(analysis.node1Id);
                 }
-                if (analysis.node2Id && analysis.node2Relation) {
+                if (analysis.node2Id !== null && analysis.node2Relation) {
                     activeTokenIds.add(analysis.tokenId);
                     activeTokenIds.add(analysis.node2Id);
                 }
@@ -713,7 +722,7 @@
 
             const edges = [];
             tokenAnalyses.forEach(analysis => {
-                if (analysis.node1Id && analysis.node1Relation && activeTokenIds.has(analysis.tokenId)) {
+                if (analysis.node1Id !== null && analysis.node1Relation && activeTokenIds.has(analysis.tokenId)) {
                     edges.push({
                         from: analysis.tokenId,
                         to: analysis.node1Id,
@@ -721,7 +730,7 @@
                         arrows: 'to'
                     });
                 }
-                if (analysis.node2Id && analysis.node2Relation && activeTokenIds.has(analysis.tokenId)) {
+                if (analysis.node2Id !== null && analysis.node2Relation && activeTokenIds.has(analysis.tokenId)) {
                     edges.push({
                         from: analysis.tokenId,
                         to: analysis.node2Id,
@@ -785,10 +794,10 @@
             cex += '#!citerelations\n';
             cex += 'source#target#relation\n';
             tokenAnalyses.forEach(a => {
-                if (a.node1Id !== null && a.node1Relation) {
+                if (a.node1Id !== null && a.node1Relation && a.node1Id !== undefined) {
                     cex += `${a.tokenId}#${a.node1Id}#${a.node1Relation.replace(/#/g, '\\#')}\n`;
                 }
-                if (a.node2Id !== null && a.node2Relation) {
+                if (a.node2Id !== null && a.node2Relation && a.node2Id !== undefined) {
                     cex += `${a.tokenId}#${a.node2Id}#${a.node2Relation.replace(/#/g, '\\#')}\n`;
                 }
             });
@@ -802,7 +811,7 @@
             URL.revokeObjectURL(url);
         }
 
-        // Import state from CEX
+        // Import state from CEX (Fixed CEX import bug)
         function importCex(fileContent) {
             const lines = fileContent.split('\n');
             let currentBlock = '';
@@ -869,7 +878,7 @@
                 }
             });
 
-            // Refresh UI (fixed bug: ensure verbal units and assignments display)
+            // Refresh UI (Fixed CEX import bug)
             stage1Section.style.display = 'block';
             stage2Section.style.display = 'block';
             updateTokenDisplay();
@@ -902,7 +911,7 @@
             tokenAssignments = [];
             tokenAnalyses = [];
             ctsUrn = '';
-            cite2Urn = `urn:cite2:analyzer:analysis:2025-06-12-${sentenceId}`;
+            cite2Urn = `urn:cite2:analyzer:analysis:2025-06-13-${sentenceId}`;
             updateTokenDisplay();
             updateVerbalUnitTable();
             updateVerbalUnitSelect();
