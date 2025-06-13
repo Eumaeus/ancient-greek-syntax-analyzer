@@ -13,10 +13,10 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
 - **Goal**: Identify a sentence adverbial (e.g., γὰρ) or mark the sentence as asyndeton.
 - **Steps**:
   - View tokenized sentence (lexical tokens in boxes with superscripted IDs, e.g., `περὶ¹`).
-  - Click a lexical token to select it as the adverbial (highlights yellow).
+  - Click a lexical token to select it as the adverbial (highlights yellow, links to '0: Sentence Root' as 'Linking Word').
   - Or check the “This sentence illustrates *asyndeton*” box to add a notional `ROOT⁰` token.
-  - To load a saved analysis, click “Import CEX” and select a `.cex` file.
-- **Result**: The adverbial or `ROOT⁰` is the root for the syntax graph. Stage 2 unlocks.
+  - Click “Import CEX” to load a saved analysis, instantly restoring the full UI state (sentence, units, assignments, relationships, graph).
+- **Result**: The adverbial or `ROOT⁰` links to '0: Sentence Root'. Stage 2 unlocks.
 
 ### Stage 2: Clause/Phrase Analysis
 - **Goal**: Define verbal units (clauses or phrases).
@@ -35,36 +35,37 @@ This guide explains how to use the Ancient Greek Syntax Analyzer, a web applicat
 - **Steps**:
   - Select a verbal unit from the dropdown (e.g., `VU1 (Subordinate Clause)`).
   - The “Unassigned Tokens” list shows tokens not yet assigned to the selected unit.
-  - Click a token in “Unassigned Tokens” to assign it to the selected unit; it moves to the unit’s assigned list (in sentence order) and disappears from “Unassigned Tokens.”
+  - Click a token in “Unassigned Tokens” to assign it; it moves to the unit’s assigned list (in sentence order) and disappears from “Unassigned Tokens.”
   - Click an assigned token under the selected unit to unassign it, returning it to “Unassigned Tokens.”
-  - Switch to a new verbal unit to start with an empty assigned list and all eligible tokens in “Unassigned Tokens.”
-  - Switch to a previously worked-on unit to restore its last assigned/unassigned state.
-  - All verbal units and their tokens are displayed, sorted by the first token’s sentence order, with distinct border colors per unit and the current unit’s tokens highlighted (green background).
+  - Switch to a new unit to start with an empty assigned list and all eligible tokens in “Unassigned Tokens.”
+  - Switch to a prior unit to restore its state.
+  - All units and tokens are displayed, sorted by the first token’s sentence order, with distinct border colors per unit and the current unit’s tokens highlighted (green background).
   - The adverbial or `ROOT⁰` is yellow and non-assignable.
 - **Display**:
-  - Verbal units show assigned tokens, indented by level (1em per level).
+  - Units show assigned tokens, indented by level.
   - “Unassigned Tokens” lists tokens available for the current unit.
 - **Result**: Prepares for Stage 4.
 
 ### Stage 4: Syntactic Relationship Analysis
-- **Goal**: Define syntactic relationships between lexical tokens to build a directed graph, identified by a CITE2-URN.
+- **Goal**: Define syntactic relationships to build a directed graph, identified by a CITE2-URN.
 - **Steps**:
-  - The graph above the table shows a top-down view, rooted at the sentence adverbial (e.g., `γὰρ`) or notional `ROOT⁰` (for asyndeton), with edges labeled by relations. Only the root appears initially; tokens are added after assigning at least one relation.
-  - In the table below, for each token:
-    - **Token ID** and **Text** are shown.
-    - **Node 1**: Select a token ID to link to (e.g., `3: γὰρ` for the root).
-    - **Node 1 Relation**: Enter the relationship (e.g., “verb” for a main verb).
-    - **Node 2**: Optionally select another token ID (e.g., for a relative pronoun’s second role).
+  - The graph above the table shows a top-down view, rooted at '0: Sentence Root' at the top, with dependent nodes extending downward and edges labeled by relations (e.g., ‘Linking Word’ for γὰρ). Tokens appear only after assigning relations.
+  - In the table below, for each token (including '0: Sentence Root'):
+    - **Token ID** and **Text**: Shown.
+    - **Node 1**: Select a token ID to link to (e.g., ‘0: Sentence Root’, first option).
+    - **Node 1 Relation**: Enter the relationship (e.g., “verb”).
+    - **Node 2**: Optionally select another token ID.
     - **Node 2 Relation**: Enter the second relationship (if applicable).
-  - Click “Export CEX” to save the analysis as a `.cex` file.
-  - The graph updates as relations are assigned, remaining zoomable and interactive.
-- **Result**: A graph representing the sentence’s syntactic structure, ready for export.
+  - The adverbial (e.g., γὰρ) is prelinked to ‘0: Sentence Root’ with ‘Linking Word’.
+  - Click “Export CEX” to save the analysis as a `.cex` file, capturing the full state.
+  - The graph updates as relations are assigned, remaining zoomable.
+- **Result**: A graph representing the sentence’s syntactic structure, exportable/importable via CEX.
 
 ## Tips
 - Changing the input resets all stages unless importing a CEX file.
 - Use Edit/Delete in Stage 2 to refine units.
-- Tokens can link to one or two other tokens (e.g., relative pronouns to antecedent and clause role).
-- Export CEX at any stage to save progress; import to resume.
+- Tokens can link to one or two other tokens (e.g., relative pronouns).
+- Export CEX to save progress; import to resume exactly where you left off.
 
 ## Support
 See [development.md](development.md) or file issues on GitHub.

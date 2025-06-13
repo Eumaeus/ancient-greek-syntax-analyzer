@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ancient Greek Syntax Analyzer</title>
-    <!-- Ancient Greek Syntax Analyzer v0.0.7, June 10, 2025: Tweaked Stage 4 graph, added CEX export/import -->
+    <!-- Ancient Greek Syntax Analyzer v0.0.8, June 12, 2025: Fixed Import CEX, added Token 0: Sentence Root, top-down graph -->
     <!-- vis.js CDN -->
     <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
-    <!-- Placeholder for cex-lib (manual CEX handling; replace with JS build if available) -->
     <style>
-        /* Modern, minimalist UI */
         body {
             margin: 0;
             padding: 0;
@@ -96,22 +94,22 @@
             cursor: default;
         }
         .token-lexical.assigned-vu1 {
-            border-color: #005ea2; /* Blue for VU1 */
+            border-color: #005ea2;
         }
         .token-lexical.assigned-vu2 {
-            border-color: #2e7d32; /* Green for VU2 */
+            border-color: #2e7d32;
         }
         .token-lexical.assigned-vu3 {
-            border-color: #d81b60; /* Pink for VU3 */
+            border-color: #d81b60;
         }
         .token-lexical.assigned-vu4 {
-            border-color: #f57c00; /* Orange for VU4 */
+            border-color: #f57c00;
         }
         .token-lexical.assigned-vu5 {
-            border-color: #6a1b9a; /* Purple for VU5 */
+            border-color: #6a1b9a;
         }
         .token-lexical.current-unit {
-            background: #e8f5e9; /* Light green */
+            background: #e8f5e9;
         }
         .token-id {
             font-size: 0.7em;
@@ -290,13 +288,12 @@
     <div id="input-section">
         <textarea id="sentence-input" placeholder="Enter an Ancient Greek sentence..."></textarea>
         <div id="urn-display">CTS-URN: <span id="cts-urn"></span></div>
-        <!-- New: Import CEX button -->
         <button id="import-cex-btn">Import CEX</button>
         <input type="file" id="import-cex" accept=".cex">
     </div>
     <div id="stage1-section">
         <h2>Stage 1: Sentence Adverbial Identification</h2>
-        <p class="instructions">Click a token to select a sentence adverbial (e.g., γὰρ), or check asyndeton if none exists, to unlock Stage 2. The adverbial or a notional root (for asyndeton) will be the root of the syntax graph.</p>
+        <p class="instructions">Click a token to select a sentence adverbial (e.g., γὰρ), or check asyndeton if none exists, to unlock Stage 2. The adverbial or notional root (for asyndeton) will link to '0: Sentence Root' in the syntax graph. Use 'Import CEX' to load a saved analysis.</p>
         <div id="controls">
             <input type="checkbox" id="asyndeton-checkbox">
             <label for="asyndeton-checkbox">This sentence illustrates <i>asyndeton</i>.</label>
@@ -360,9 +357,8 @@
     <div id="stage4-section">
         <h2>Stage 4: Syntactic Relationship Analysis</h2>
         <div id="urn-display">CITE2-URN: <span id="cite2-urn"></span></div>
-        <!-- New: Export CEX button -->
         <button id="export-cex">Export CEX</button>
-        <p class="instructions">The graph above shows a top-down view of the syntax, rooted at the sentence adverbial (e.g., γὰρ) or notional root (for asyndeton), with edges labeled by relations. Tokens appear only after assigning at least one relation below. In the table, assign relationships for each lexical token by selecting linked tokens (Node 1, Node 2) and defining the relation (e.g., 'verb', 'conjunction'). Tokens can link to one or two other tokens (e.g., a relative pronoun to its antecedent and clause role).</p>
+        <p class="instructions">The graph above shows a top-down view of the syntax, rooted at '0: Sentence Root' at the top, with edges labeled by relations (e.g., 'Linking Word' for γὰρ). Tokens appear only after assigning at least one relation below. In the table, assign relationships for each lexical token by selecting linked tokens (Node 1, Node 2, including '0: Sentence Root') and defining the relation (e.g., 'verb', 'conjunction'). Tokens can link to one or two other tokens (e.g., a relative pronoun to its antecedent and clause role). Export the analysis as a CEX file to save progress.</p>
         <div id="graph-container"></div>
         <table id="analysis-table">
             <thead>
@@ -425,8 +421,8 @@
         let tokenAssignments = []; // { tokenId: number, verbalUnitIds: string[] }
         let tokenAnalyses = []; // { tokenId: number, node1Id: number, node1Relation: string, node2Id: number, node2Relation: string }
         let graphNetwork = null;
-        let ctsUrn = 'urn:cts:greekLit:tlg0054.tlg001.perseus-grc1:1.1.1'; // Sample for Lysias
-        let cite2Urn = `urn:cite2:analyzer:analysis:2025-06-10-${sentenceId}`; // Analysis URN
+        let ctsUrn = 'urn:cts:greekLit:tlg0054.tlg001.perseus-grc1:1.1.1';
+        let cite2Urn = `urn:cite2:analyzer:analysis:2025-06-12-${sentenceId}`;
 
         // Default sentence from Lysias
         const defaultSentence = "περὶ τούτου γὰρ μόνου τοῦ ἀδικήματος καὶ ἐν δημοκρατίᾳ καὶ ὀλιγαρχίᾳ ἡ αὐτὴ τιμωρία τοῖς ἀσθενεστάτοις πρὸς τοὺς τὰ μέγιστα δυναμένους ἀποδέδοται, ὥστε τὸν χείριστον τῶν αὐτῶν τυγχάνειν τῷ βελτίστῳ";
@@ -496,8 +492,14 @@
             if (tokens[index].type !== 'lexical') return;
             sentenceAdverbialId = tokens[index].id;
             stage1Complete = true;
+            // New: Link adverbial to Sentence Root
+            const analysis = tokenAnalyses.find(a => a.tokenId === sentenceAdverbialId) || { tokenId: sentenceAdverbialId };
+            analysis.node1Id = 0;
+            analysis.node1Relation = 'Linking Word';
+            if (!tokenAnalyses.includes(analysis)) tokenAnalyses.push(analysis);
             updateTokenDisplay();
             updateStage2Visibility();
+            updateAnalysisTable();
         }
 
         // Update status message and stage visibility
@@ -524,7 +526,7 @@
 
         function updateStage3Visibility() {
             stage3Section.style.display = verbalUnits.length > 0 ? 'block' : 'none';
-            stage4Section.style.display = verbalUnits.length > 0 ? 'block' : 'none';
+            stage4Section.style.display = stage1Complete ? 'block' : 'none';
             updateVerbalUnitSelect();
             updateAssignmentDisplay();
             updateAnalysisTable();
@@ -716,23 +718,49 @@
             }
         }
 
-        // Update analysis table
+        // New: Initialize default state with Sentence Root
+        function initializeDefaultState() {
+            if (sentenceAdverbialId) {
+                const analysis = tokenAnalyses.find(a => a.tokenId === sentenceAdverbialId) || { tokenId: sentenceAdverbialId };
+                analysis.node1Id = 0;
+                analysis.node1Relation = 'Linking Word';
+                if (!tokenAnalyses.includes(analysis)) tokenAnalyses.push(analysis);
+            }
+        }
+
+        // Updated: Update analysis table
         function updateAnalysisTable() {
             analysisTableBody.innerHTML = '';
+            // New: Add Sentence Root row
+            const rootText = asyndetonCheckbox.checked ? 'Sentence Root' : tokens.find(t => t.id === sentenceAdverbialId)?.text || 'Root';
+            const rootRow = document.createElement('tr');
+            rootRow.innerHTML = `
+                <td>0</td>
+                <td>${rootText}</td>
+                <td><select id="node1-0" disabled><option value="">N/A</option></select></td>
+                <td><input type="text" id="node1-relation-0" disabled></td>
+                <td><select id="node2-0" disabled><option value="">N/A</option></select></td>
+                <td><input type="text" id="node2-relation-0" disabled></td>
+            `;
+            analysisTableBody.appendChild(rootRow);
+
             tokens.filter(t => t.type === 'lexical').forEach(token => {
                 const analysis = tokenAnalyses.find(a => a.tokenId === token.id) || {};
+                const rootLabel = asyndetonCheckbox.checked ? '0: Sentence Root' : `0: ${tokens.find(t => t.id === sentenceAdverbialId)?.text || 'Root'}`;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${token.id}</td>
                     <td>${token.text}</td>
                     <td><select id="node1-${token.id}" onchange="updateAnalysis(${token.id}, 'node1Id', this.value)">
                         <option value="">Select...</option>
-                        ${tokens.filter(u => u.type === 'lexical' && u.id !== token.id).map(u => `<option value="${u.id}" ${analysis.node1Id === u.id ? 'selected' : ''}>${u.id}: ${u.text}</option>`).join('')}
+                        <option value="0" ${analysis.node1Id === 0 ? 'selected' : ''}>${rootLabel}</option>
+                        ${tokens.filter(u => u.type === 'lexical' && u.id !== token.id && u.id !== 0).map(u => `<option value="${u.id}" ${analysis.node1Id === u.id ? 'selected' : ''}>${u.id}: ${u.text}</option>`).join('')}
                     </select></td>
                     <td><input type="text" id="node1-relation-${token.id}" value="${analysis.node1Relation || ''}" oninput="updateAnalysis(${token.id}, 'node1Relation', this.value)" autocomplete="on"></td>
                     <td><select id="node2-${token.id}" onchange="updateAnalysis(${token.id}, 'node2Id', this.value)">
                         <option value="">Select...</option>
-                        ${tokens.filter(u => u.type === 'lexical' && u.id !== token.id).map(u => `<option value="${u.id}" ${analysis.node2Id === u.id ? 'selected' : ''}>${u.id}: ${u.text}</option>`).join('')}
+                        <option value="0" ${analysis.node2Id === 0 ? 'selected' : ''}>${rootLabel}</option>
+                        ${tokens.filter(u => u.type === 'lexical' && u.id !== token.id && u.id !== 0).map(u => `<option value="${u.id}" ${analysis.node2Id === u.id ? 'selected' : ''}>${u.id}: ${u.text}</option>`).join('')}
                     </select></td>
                     <td><input type="text" id="node2-relation-${token.id}" value="${analysis.node2Relation || ''}" oninput="updateAnalysis(${token.id}, 'node2Relation', this.value)" autocomplete="on"></td>
                 `;
@@ -756,9 +784,9 @@
             updateGraph();
         }
 
-        // Updated: Update graph visualization
+        // Updated: Graph visualization
         function updateGraph() {
-            const activeTokenIds = new Set([sentenceAdverbialId || 0]); // Start with root
+            const activeTokenIds = new Set([0]); // Always include Sentence Root
             tokenAnalyses.forEach(analysis => {
                 if (analysis.node1Id && analysis.node1Relation) {
                     activeTokenIds.add(analysis.tokenId);
@@ -770,19 +798,21 @@
                 }
             });
 
-            const nodes = tokens
-                .filter(t => t.type === 'lexical' && activeTokenIds.has(t.id))
-                .map(t => ({
-                    id: t.id,
-                    label: `${t.id}: ${t.text}`,
-                    color: t.id === sentenceAdverbialId || t.id === 0 ? '#fff9c4' : '#e6f0fa',
-                    // Tweak: Enhance root node
-                    font: (t.id === sentenceAdverbialId || t.id === 0) ? { size: 14, bold: true } : { size: 12 }
-                }));
+            const nodes = [{
+                id: '0',
+                label: asyndetonCheckbox.checked ? '0: Sentence Root' : `0: ${tokens.find(t => t.id === sentenceAdverbialId)?.text || 'Root'}`,
+                color: '#fff9c4',
+                font: { size: 14, bold: true }
+            }].concat(tokens.filter(t => t.type === 'lexical' && activeTokenIds.has(t.id) && t.id !== 0).map(t => ({
+                id: t.id,
+                label: `${t.id}: ${t.text}`,
+                color: '#e6f0fa',
+                font: { size: 12 }
+            })));
 
             const edges = [];
             tokenAnalyses.forEach(analysis => {
-                if (analysis.node1Id && analysis.node1Relation && activeTokenIds.has(analysis.tokenId) && activeTokenIds.has(analysis.node1Id)) {
+                if (analysis.node1Id && analysis.node1Relation && activeTokenIds.has(analysis.tokenId)) {
                     edges.push({
                         from: analysis.tokenId,
                         to: analysis.node1Id,
@@ -790,7 +820,7 @@
                         arrows: 'to'
                     });
                 }
-                if (analysis.node2Id && analysis.node2Relation && activeTokenIds.has(analysis.tokenId) && activeTokenIds.has(analysis.node2Id)) {
+                if (analysis.node2Id && analysis.node2Relation && activeTokenIds.has(analysis.tokenId)) {
                     edges.push({
                         from: analysis.tokenId,
                         to: analysis.node2Id,
@@ -804,10 +834,11 @@
             const options = {
                 layout: {
                     hierarchical: {
-                        direction: 'UD', // Top-down (root at top)
-                        sortMethod: 'directed',
-                        levelSeparation: 120, // Tweak: Increased spacing
-                        nodeSpacing: 180 // Tweak: Increased spacing
+                        direction: 'UD', // Top-down
+                        sortMethod: 'hubsize', // Fix: Root at top
+                        parentCentralization: true,
+                        levelSeparation: 150,
+                        nodeSpacing: 200
                     }
                 },
                 nodes: {
@@ -824,7 +855,7 @@
             graphNetwork = new vis.Network(graphContainer, data, options);
         }
 
-        // New: Export state to CEX
+        // Export state to CEX
         function exportCex() {
             let cex = '#!citelibrary\n';
             cex += `name#Ancient Greek Syntax Analysis\n`;
@@ -837,7 +868,8 @@
 
             cex += '#!citedata\n';
             cex += 'tokenId#text#verbalUnitIds\n';
-            tokens.filter(t => t.type === 'lexical').forEach(t => {
+            const allTokens = asyndetonCheckbox.checked ? [{ id: 0, text: 'ROOT', type: 'lexical' }, ...tokens] : tokens;
+            allTokens.filter(t => t.type === 'lexical').forEach(t => {
                 const units = tokenAssignments.find(a => a.tokenId === t.id)?.verbalUnitIds.join(',') || '';
                 cex += `${t.id}#${t.text.replace(/#/g, '\\#')}#${units}\n`;
             });
@@ -853,10 +885,10 @@
             cex += '#!citerelations\n';
             cex += 'source#target#relation\n';
             tokenAnalyses.forEach(a => {
-                if (a.node1Id && a.node1Relation) {
+                if (a.node1Id !== null && a.node1Relation) {
                     cex += `${a.tokenId}#${a.node1Id}#${a.node1Relation.replace(/#/g, '\\#')}\n`;
                 }
-                if (a.node2Id && a.node2Relation) {
+                if (a.node2Id !== null && a.node2Relation) {
                     cex += `${a.tokenId}#${a.node2Id}#${a.node2Relation.replace(/#/g, '\\#')}\n`;
                 }
             });
@@ -870,7 +902,7 @@
             URL.revokeObjectURL(url);
         }
 
-        // New: Import state from CEX
+        // Fixed: Import state from CEX
         function importCex(fileContent) {
             const lines = fileContent.split('\n');
             let currentBlock = '';
@@ -879,6 +911,7 @@
             let unitData = [];
             let relationData = [];
 
+            // Parse CEX
             lines.forEach(line => {
                 line = line.trim();
                 if (line.startsWith('#!citelibrary')) {
@@ -897,13 +930,13 @@
                         const [key, value] = parts;
                         if (key === 'urn') cite2Urn = value;
                         if (key === 'text') ctsUrn = value;
-                    } else if (currentBlock === 'sentence') {
+                    } else if (currentBlock === 'sentence' && parts.length >= 2) {
                         sentenceData = { id: parts[0], text: parts[1] };
-                    } else if (currentBlock === 'tokens') {
+                    } else if (currentBlock === 'tokens' && parts.length >= 3) {
                         tokenData.push({ id: parseInt(parts[0]), text: parts[1], verbalUnitIds: parts[2].split(',').filter(id => id) });
-                    } else if (currentBlock === 'units') {
+                    } else if (currentBlock === 'units' && parts.length >= 4) {
                         unitData.push({ id: parts[0], syntacticType: parts[1], semanticType: parts[2], level: parseInt(parts[3]) });
-                    } else if (currentBlock === 'relations') {
+                    } else if (currentBlock === 'relations' && parts.length >= 3) {
                         relationData.push({ source: parseInt(parts[0]), target: parseInt(parts[1]), relation: parts[2] });
                     }
                 }
@@ -911,34 +944,54 @@
 
             // Update state
             sentenceId = sentenceData.id || generateUUID();
-            input.value = sentenceData.text || '';
+            input.value = sentenceData.text || defaultSentence;
             tokens = tokenize(input.value);
+
+            // Handle asyndeton and sentence adverbial
+            asyndetonCheckbox.checked = tokenData.some(t => t.id === 0 && t.text === 'ROOT');
             if (asyndetonCheckbox.checked) {
-                tokens.unshift({ text: "ROOT", type: 'lexical', id: 0 });
+                if (!tokens.some(t => t.id === 0)) {
+                    tokens.unshift({ text: "ROOT", type: 'lexical', id: 0 });
+                }
                 sentenceAdverbialId = 0;
                 stage1Complete = true;
             } else {
-                const adverbialToken = tokens.find(t => t.text === sentenceData.text.split(' ').find(w => w === 'γὰρ'));
-                sentenceAdverbialId = adverbialToken?.id || null;
+                const adverbialToken = tokenData.find(t => t.text === 'γὰρ');
+                sentenceAdverbialId = adverbialToken ? adverbialToken.id : null;
                 stage1Complete = !!sentenceAdverbialId;
+                if (sentenceAdverbialId) {
+                    const analysis = tokenAnalyses.find(a => a.tokenId === sentenceAdverbialId) || { tokenId: sentenceAdverbialId };
+                    analysis.node1Id = 0;
+                    analysis.node1Relation = 'Linking Word';
+                    if (!tokenAnalyses.includes(analysis)) tokenAnalyses.push(analysis);
+                }
             }
 
+            // Restore verbal units
             verbalUnits = unitData;
-            verbalUnitIdCounter = verbalUnits.length + 1;
-            tokenAssignments = tokenData.map(t => ({ tokenId: t.id, verbalUnitIds: t.verbalUnitIds }));
+            verbalUnitIdCounter = Math.max(...verbalUnits.map(u => parseInt(u.id.replace('VU', '')) || 0)) + 1 || 1;
+
+            // Restore token assignments
+            tokenAssignments = tokenData
+                .filter(t => tokens.some(tok => tok.id === t.id))
+                .map(t => ({ tokenId: t.id, verbalUnitIds: t.verbalUnitIds.filter(id => verbalUnits.some(u => u.id === id)) }));
+
+            // Restore relationships
             tokenAnalyses = [];
             relationData.forEach(r => {
-                let analysis = tokenAnalyses.find(a => a.tokenId === r.source);
-                if (!analysis) {
-                    analysis = { tokenId: r.source };
-                    tokenAnalyses.push(analysis);
-                }
-                if (!analysis.node1Id) {
-                    analysis.node1Id = r.target;
-                    analysis.node1Relation = r.relation;
-                } else if (!analysis.node2Id) {
-                    analysis.node2Id = r.target;
-                    analysis.node2Relation = r.relation;
+                if (tokens.some(t => t.id === r.source) || r.source === 0) {
+                    let analysis = tokenAnalyses.find(a => a.tokenId === r.source);
+                    if (!analysis) {
+                        analysis = { tokenId: r.source };
+                        tokenAnalyses.push(analysis);
+                    }
+                    if (!analysis.node1Id) {
+                        analysis.node1Id = r.target;
+                        analysis.node1Relation = r.relation;
+                    } else if (!analysis.node2Id) {
+                        analysis.node2Id = r.target;
+                        analysis.node2Relation = r.relation;
+                    }
                 }
             });
 
@@ -959,7 +1012,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => importCex(event.target.result);
                 reader.readAsText(file);
-                e.target.value = ''; // Reset input
+                e.target.value = '';
             }
         });
 
@@ -974,8 +1027,8 @@
             sentenceId = generateUUID();
             tokenAssignments = [];
             tokenAnalyses = [];
-            ctsUrn = ''; // Reset CTS-URN until library integration
-            cite2Urn = `urn:cite2:analyzer:analysis:2025-06-10-${sentenceId}`;
+            ctsUrn = '';
+            cite2Urn = `urn:cite2:analyzer:analysis:2025-06-12-${sentenceId}`;
             updateTokenDisplay();
             updateVerbalUnitTable();
             updateAssignmentDisplay();
@@ -993,13 +1046,21 @@
             } else {
                 tokens = tokens.filter(t => t.id !== 0);
                 stage1Complete = false;
+                // Reset adverbial linkage
+                const analysis = tokenAnalyses.find(a => a.tokenId === sentenceAdverbialId);
+                if (analysis) {
+                    analysis.node1Id = null;
+                    analysis.node1Relation = null;
+                }
             }
             updateTokenDisplay();
             updateStage2Visibility();
+            updateAnalysisTable();
         });
 
         // Initialize with default sentence
         tokens = tokenize(defaultSentence);
+        initializeDefaultState();
         updateTokenDisplay();
     </script>
 </body>
